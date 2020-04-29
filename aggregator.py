@@ -11,8 +11,9 @@ from pyramid.events import subscriber
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 
-try sys.argv[1] == 'debug':
-	debug = True
+try:
+	if sys.argv[1] == 'debug':
+		debug = True
 except:
 	debug = False
 
