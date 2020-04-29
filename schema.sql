@@ -4,7 +4,8 @@ create table if not exists articles (
 	title text not null,
 	read int default 0,
 	local_html_path text,
-	interesting int default 0
+	interesting int default 0,
+	added text default date('now')
 );
 
 create table if not exists sources (
@@ -13,4 +14,3 @@ create table if not exists sources (
 	name text not null
 );
 
-insert into sources (root_url, name) values ('https://pjmedia.com/instapundit/', 'instapundit')
