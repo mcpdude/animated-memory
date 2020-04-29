@@ -2,7 +2,6 @@ import os
 import logging
 import sqlite3
 import newspaper
-import setuptools
 from pyramid.config import Configurator
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.events import ApplicationCreated
@@ -27,9 +26,11 @@ def list_view(request):
 	for source in sources.fetchall():
 		# articles = newspaper.build(source[0], memoize_articles=False)
 		articles = newspaper.build(source[0])
+		if articles.size() > 0:
+			request.session.flash("Found new stories from " + source[1])
 		for article in articles.articles:
 			if articles.size() > 0:
-				request.session.flash("Found a new story from " + source[1])
+				
 			if article.url not in current_articles and article.title is not None and article.title.strip() is not "":
 				print(article.title)
 							
