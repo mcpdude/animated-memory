@@ -31,8 +31,7 @@ def list_view(request):
 		for article in articles.articles:
 				
 			if article.url not in current_articles and article.title is not None and article.title.strip() is not "":
-				print(article.title)
-							
+				# print(article.title)
 				request.db.execute('insert into articles(url, title) values (?, ?)', [article.url, article.title])
 				request.db.commit()
 	rs = request.db.execute('select id, title, url, interesting from articles where read = 0')
@@ -42,17 +41,19 @@ def list_view(request):
 
 @view_config(route_name='new', renderer='new.mako')
 def new_view(request):
+	rs = request.db.execute('select root_url, name from sources')
+	sources = [dict(url=row[0], name=row[1]) for row in rs.fetchall()]
 	if request.method == 'POST':
 		if request.POST.get('url'):
 			request.db.execute(
 				'insert into sources (root_url, name) values (?, ?)',
-				[request.POST['root_url']])
+				[request.POST['url'], request.POST['name']])
 			request.db.commit()
 			request.session.flash("New source added!")
 			return HTTPFound(location=request.route_url('list'))
 		else:
 			request.session.flash('Please enter a url for the news source')
-	return {}
+	return {'sources': sources}
 
 @view_config(route_name='interesting')
 def interesting(request):
