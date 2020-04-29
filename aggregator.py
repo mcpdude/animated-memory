@@ -11,9 +11,9 @@ from pyramid.events import subscriber
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 
-if sys.argv[1] == 'debug':
+try sys.argv[1] == 'debug':
 	debug = True
-else:
+except:
 	debug = False
 
 from wsgiref.simple_server import make_server
