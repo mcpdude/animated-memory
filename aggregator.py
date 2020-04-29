@@ -2,6 +2,7 @@ import os
 import logging
 import sqlite3
 import newspaper
+import sys
 from pyramid.config import Configurator
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.events import ApplicationCreated
@@ -10,6 +11,10 @@ from pyramid.events import subscriber
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 
+if sys.argv[1] == 'debug':
+	debug = True
+else:
+	debug = False
 
 from wsgiref.simple_server import make_server
 
@@ -24,8 +29,10 @@ def list_view(request):
 	current_articles = [item[0] for item in current_articles.fetchall()]
 
 	for source in sources.fetchall():
-		# articles = newspaper.build(source[0], memoize_articles=False)
-		articles = newspaper.build(source[0])
+		if debug:
+			articles = newspaper.build(source[0], memoize_articles=False)
+		else:
+			articles = newspaper.build(source[0])
 		if articles.size() > 0:
 			request.session.flash("Found new stories from " + source[1])
 		for article in articles.articles:
@@ -34,7 +41,7 @@ def list_view(request):
 				# print(article.title)
 				request.db.execute('insert into articles(url, title) values (?, ?)', [article.url, article.title])
 				request.db.commit()
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 0')
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 limit 100')
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	# print(articles)
 	return {'articles': articles}
@@ -44,6 +51,7 @@ def new_view(request):
 	rs = request.db.execute('select root_url, name from sources')
 	sources = [dict(url=row[0], name=row[1]) for row in rs.fetchall()]
 	if request.method == 'POST':
+		print(request.POST)
 		if request.POST.get('url'):
 			request.db.execute(
 				'insert into sources (root_url, name) values (?, ?)',
