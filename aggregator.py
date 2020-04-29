@@ -29,7 +29,6 @@ def list_view(request):
 		if articles.size() > 0:
 			request.session.flash("Found new stories from " + source[1])
 		for article in articles.articles:
-			if articles.size() > 0:
 				
 			if article.url not in current_articles and article.title is not None and article.title.strip() is not "":
 				print(article.title)
