@@ -2,6 +2,9 @@
 <%inherit file="layout.mako"/>
 
 <h1>List of Articles</h1>
+<form action="${request.route_url('refresh')}" method="get">
+  <input type="submit" name="add" value="Refresh articles" class="button">
+</form>
 
 <ul id="articles">
 % if articles:

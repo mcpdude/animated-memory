@@ -27,6 +27,15 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 @view_config(route_name='list', renderer='list.mako')
 def list_view(request):
+	current_articles = request.db.execute('select url from articles')
+	current_articles = [item[0] for item in current_articles.fetchall()]
+
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 limit 50')
+	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
+	return {'articles': articles}
+
+@view_config(route_name='refresh')
+def refresh_articles(request):
 	sources = request.db.execute('select root_url, name, id from sources')
 	current_articles = request.db.execute('select url from articles')
 	current_articles = [item[0] for item in current_articles.fetchall()]
@@ -44,11 +53,8 @@ def list_view(request):
 				# print(article.title)
 				request.db.execute('insert into articles(url, title, source_id) values (?, ?, ?)', [article.url, article.title, source[2]])
 				request.db.commit()
-	print(tempfile.gettempdir())
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 limit 50')
-	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
-	# print(articles)
-	return {'articles': articles}
+
+	return HTTPFound(location=request.route_url('list'))
 
 @view_config(route_name='new', renderer='new.mako')
 def new_view(request):
@@ -130,6 +136,7 @@ def main():
 	config = Configurator(settings=settings, session_factory=session_factory)
 	config.include('pyramid_mako')
 	config.add_route('list', '/')
+	config.add_route('refresh', '/refresh')
 	config.add_route('delete_source', '/delete_source/{id}')
 	config.add_route('new', '/new')
 	config.add_route('interesting', '/interesting/{id}')
