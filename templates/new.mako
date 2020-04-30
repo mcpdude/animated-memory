@@ -15,6 +15,9 @@
   % for source in sources:
   <li>
     <span class="name"><a href="${source['url']}">${source['name']}</a></span>
+    <span class="actions">
+      [ <a href="${request.route_url('delete_source', id=source['id'])}">delete?</a> ]
+    </span>
   </li>
   % endfor
 % else:

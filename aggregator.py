@@ -49,8 +49,8 @@ def list_view(request):
 
 @view_config(route_name='new', renderer='new.mako')
 def new_view(request):
-	rs = request.db.execute('select root_url, name from sources')
-	sources = [dict(url=row[0], name=row[1]) for row in rs.fetchall()]
+	rs = request.db.execute('select root_url, name, id from sources')
+	sources = [dict(url=row[0], name=row[1], id=row[2]) for row in rs.fetchall()]
 	if request.method == 'POST':
 		print(request.POST)
 		if request.POST.get('url'):
@@ -81,6 +81,16 @@ def not_interesting(request):
 	request.db.commit()
 	request.session.flash("Read the article! Sorry, I'll try to find something more interesting next time.")
 	return HTTPFound(location=request.route_url('list'))
+
+@view_config(route_name='delete_source')
+def delete_source(request):
+	print(request)
+	source_id = int(request.matchdict['id'])
+	request.db.execute('delete from sources where id = ?',
+		(str(source_id)))
+	request.db.commit()
+	request.session.flash("Deleted the source.")
+	return HTTPFound(location=request.route_url('new'))
 
 @subscriber(NewRequest)
 def new_request_subscriber(event):
@@ -114,6 +124,7 @@ def main():
 	config = Configurator(settings=settings, session_factory=session_factory)
 	config.include('pyramid_mako')
 	config.add_route('list', '/')
+	config.add_route('delete_source', '/delete_source/{id}')
 	config.add_route('new', '/new')
 	config.add_route('interesting', '/interesting/{id}')
 	config.add_route('not_interesting', '/not_interesting/{id}')
