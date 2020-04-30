@@ -42,7 +42,7 @@ def list_view(request):
 				# print(article.title)
 				request.db.execute('insert into articles(url, title) values (?, ?)', [article.url, article.title])
 				request.db.commit()
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 limit 100')
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 limit 50')
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	# print(articles)
 	return {'articles': articles}
