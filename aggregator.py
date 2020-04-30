@@ -3,6 +3,8 @@ import logging
 import sqlite3
 import newspaper
 import sys
+import tempfile
+
 from pyramid.config import Configurator
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.events import ApplicationCreated
@@ -25,7 +27,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 @view_config(route_name='list', renderer='list.mako')
 def list_view(request):
-	sources = request.db.execute('select root_url, name from sources')
+	sources = request.db.execute('select root_url, name, id from sources')
 	current_articles = request.db.execute('select url from articles')
 	current_articles = [item[0] for item in current_articles.fetchall()]
 
@@ -40,9 +42,10 @@ def list_view(request):
 				
 			if article.url not in current_articles and article.title is not None and article.title.strip() is not "":
 				# print(article.title)
-				request.db.execute('insert into articles(url, title) values (?, ?)', [article.url, article.title])
+				request.db.execute('insert into articles(url, title, source_id) values (?, ?, ?)', [article.url, article.title, source[2]])
 				request.db.commit()
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 limit 50')
+	print(tempfile.gettempdir())
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 limit 50')
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	# print(articles)
 	return {'articles': articles}
@@ -87,6 +90,9 @@ def delete_source(request):
 	print(request)
 	source_id = int(request.matchdict['id'])
 	request.db.execute('delete from sources where id = ?',
+		(str(source_id)))
+	request.db.commit()
+	request.db.execute('update articles set visible = 0 where source_id = ?',
 		(str(source_id)))
 	request.db.commit()
 	request.session.flash("Deleted the source.")
