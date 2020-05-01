@@ -61,7 +61,7 @@ def refresh_articles(request):
 
 @view_config(route_name='read', renderer='read.mako')
 def read_articles(request):
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 1')
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 1 order by interesting')
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	return {'articles': articles}
 
