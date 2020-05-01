@@ -42,19 +42,28 @@ def refresh_articles(request):
 
 	for source in sources.fetchall():
 		if debug:
+			print('debug mode')
 			articles = newspaper.build(source[0], memoize_articles=False)
 		else:
 			articles = newspaper.build(source[0])
 		if articles.size() > 0:
 			request.session.flash("Found new stories from " + source[1])
 		for article in articles.articles:
-				
+			# print(article.title)	
 			if article.url not in current_articles and article.title is not None and article.title.strip() is not "":
-				# print(article.title)
+				print(article.title)
+				print(article.url, article.title, source[2])
 				request.db.execute('insert into articles(url, title, source_id) values (?, ?, ?)', [article.url, article.title, source[2]])
 				request.db.commit()
 
 	return HTTPFound(location=request.route_url('list'))
+
+
+@view_config(route_name='read', renderer='read.mako')
+def read_articles(request):
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 1')
+	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
+	return {'articles': articles}
 
 @view_config(route_name='new', renderer='new.mako')
 def new_view(request):
@@ -137,6 +146,7 @@ def main():
 	config.include('pyramid_mako')
 	config.add_route('list', '/')
 	config.add_route('refresh', '/refresh')
+	config.add_route('read', '/read')
 	config.add_route('delete_source', '/delete_source/{id}')
 	config.add_route('new', '/new')
 	config.add_route('interesting', '/interesting/{id}')

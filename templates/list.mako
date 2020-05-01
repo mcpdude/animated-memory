@@ -23,4 +23,6 @@
   <li class="last">
     <a href="${request.route_url('new')}">Add a new source</a>
   </li>
+
+  <h3><a href="${request.route_url('read')}">Want to see the articles you've read before?</a></h3>
 </ul>
