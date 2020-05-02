@@ -49,19 +49,31 @@ def refresh_articles(request):
 		if articles.size() > 0:
 			request.session.flash("Found new stories from " + source[1])
 		for article in articles.articles:
-			# print(article.title)	
 			if article.url not in current_articles and article.title is not None and article.title.strip() is not "":
-				print(article.title)
-				print(article.url, article.title, source[2])
-				request.db.execute('insert into articles(url, title, source_id) values (?, ?, ?)', [article.url, article.title, source[2]])
-				request.db.commit()
+				try:
+					request.db.execute('insert into articles(url, title, source_id) values (?, ?, ?)', [article.url, article.title, source[2]])
+					request.db.commit()
+					article_id = str(request.db.execute('select id from articles where url = ?', [article.url]).fetchall()[0][0])
+					os.mkdir('article_storage/' + article_id)
+					article.download()
+					article.parse()
+					with open('article_storage/'+article_id + '/article.html', 'w+') as html:
+						html.write(article.article_html)
+					with open('article_storage/'+article_id + '/article.txt', 'w+') as text:
+						text.write(article.text)
+
+				except Exception as e:
+					print(e)
+					request.db.execute('update articles set title = ? where id = ?', ['ERROR' + article.title, article_id])
+					request.db.commit()
+
 
 	return HTTPFound(location=request.route_url('list'))
 
 
 @view_config(route_name='read', renderer='read.mako')
 def read_articles(request):
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 1 order by interesting')
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 1 order by interesting desc')
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	return {'articles': articles}
 
