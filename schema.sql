@@ -19,3 +19,7 @@ create table if not exists sources (
 	date_added text default (datetime('now'))
 );
 
+create table if not exists settings (
+	name text,
+	articles_to_show int default 10
+);
