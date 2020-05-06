@@ -21,8 +21,9 @@
   <li>There are no new articles. Maybe add a source?</li>
 % endif
   <li class="last">
-    <a href="${request.route_url('new')}">Add a new source</a>
+    <a href="${request.route_url('new')}">Add/Delete a source</a>
   </li>
 
   <h3><a href="${request.route_url('read')}">Want to see the articles you've read before?</a></h3>
+  <h3><a href="${request.route_url('settings')}">Settings</a></h3>
 </ul>
