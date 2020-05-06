@@ -26,7 +26,10 @@ settings['db'] = os.path.join(here, 'articles.db')
 wipe = input('Do you want to wipe your setup? Y/n \n')
 
 if wipe == 'Y':
-	os.remove('articles.db')
+	try:
+		os.remove('articles.db')
+	except:
+		print('articles.db does not exist')
 	with open(os.path.join(here, 'schema_new.sql')) as f:
 		statement = f.read()
 		
