@@ -80,7 +80,7 @@ def read_articles(request):
 def settings(request):
 	rs = request.db.execute('select * from settings')
 	# print(rs.fetchall())
-	settings = [dict(name=row[0], articles_to_show=row[1]) for row in rs.fetchall()]
+	settings = [dict(name=row[1], articles_to_show=row[2]) for row in rs.fetchall()]
 	print(settings)
 	return {'settings': settings}
 
@@ -177,12 +177,7 @@ def close_db_connection(request):
 @subscriber(ApplicationCreated)
 def application_created_subscriber(event):
 	log.warning("Initializing database...")
-	with open(os.path.join(here, 'schema.sql')) as f:
-		statement = f.read()
-		settings = event.app.registry.settings
-		db = sqlite3.connect(settings['db'])
-		db.executescript(statement)
-		db.commit()
+
 
 def main():
 	settings = {}
