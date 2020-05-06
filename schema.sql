@@ -20,6 +20,7 @@ create table if not exists sources (
 );
 
 create table if not exists settings (
+	id INTEGER PRIMARY KEY CHECK (id = 0),
 	name text,
 	articles_to_show int default 10
 );
