@@ -39,8 +39,8 @@ conn.commit()
 for source in sources:
 	print(source[1])
 	# Grab articles, with a short timeout
-	articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=False)
-	# articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=True)
+	# articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=False)
+	articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=True)
 
 	for article in articles.articles:
 		print(article.url)
