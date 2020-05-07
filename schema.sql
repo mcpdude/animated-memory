@@ -3,7 +3,6 @@ create table if not exists articles (
 	url text not null,
 	title text not null,
 	read int default 0,
-	local_html_path text,
 	interesting int default 0,
 	visible int default 1,
 	source_id int not null,
