@@ -4,6 +4,8 @@ import sqlite3
 import newspaper
 import sys
 import tempfile
+import subprocess
+
 
 from pyramid.config import Configurator
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
@@ -35,37 +37,7 @@ def list_view(request):
 
 @view_config(route_name='refresh')
 def refresh_articles(request):
-	sources = request.db.execute('select root_url, name, id from sources')
-	current_articles = request.db.execute('select url from articles')
-	current_articles = [item[0] for item in current_articles.fetchall()]
-
-	for source in sources.fetchall():
-		if debug:
-			print('debug mode')
-			articles = newspaper.build(source[0], memoize_articles=False)
-		else:
-			articles = newspaper.build(source[0])
-		if articles.size() > 0:
-			request.session.flash("Found new stories from " + source[1])
-		for article in articles.articles:
-			if article.url not in current_articles and article.title is not None and article.title.strip() is not "":
-				try:
-					request.db.execute('insert into articles(url, title, source_id) values (?, ?, ?)', [article.url, article.title, source[2]])
-					request.db.commit()
-					article_id = str(request.db.execute('select id from articles where url = ?', [article.url]).fetchall()[0][0])
-					os.mkdir('article_storage/' + article_id)
-					article.download()
-					article.parse()
-					with open('article_storage/'+article_id + '/article.html', 'w+') as html:
-						html.write(article.article_html)
-					with open('article_storage/'+article_id + '/article.txt', 'w+') as text:
-						text.write(article.text)
-
-				except Exception as e:
-					print(e)
-					request.db.execute('update articles set title = ? where id = ?', ['ERROR' + article.title, article_id])
-					request.db.commit()
-
+	subprocess.Popen(['python3', 'scraper.py', '&'])
 
 	return HTTPFound(location=request.route_url('list'))
 
@@ -201,6 +173,8 @@ def main():
 	config.add_route('not_interesting', '/not_interesting/{id}')
 	config.add_static_view('static', os.path.join(here, 'static'))
 	config.scan()
+
+
 
 	app = config.make_wsgi_app()
 	server = make_server('0.0.0.0', 8080, app)
