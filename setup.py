@@ -36,6 +36,7 @@ if wipe == 'Y':
 		db = sqlite3.connect(settings['db'])
 		db.executescript(statement)
 		db.commit()
+		db.close()
 
 elif wipe == 'n':
 	with open(os.path.join(here, 'schema.sql')) as f:
@@ -44,6 +45,8 @@ elif wipe == 'n':
 		db = sqlite3.connect(settings['db'])
 		db.executescript(statement)
 		db.commit()
+		db.close()
 
 else:
 	print("Sorry, didn't understand that. Make sure to use Y or n.")
+
