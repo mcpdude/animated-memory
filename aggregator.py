@@ -14,40 +14,45 @@ from pyramid.events import NewRequest
 from pyramid.events import subscriber
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
+from wsgiref.simple_server import make_server
 
+# Set a debug flag. Hacky, but quick and sufficient
 try:
 	if sys.argv[1] == 'debug':
 		debug = True
 except:
 	debug = False
 
-from wsgiref.simple_server import make_server
 
 logging.basicConfig()
 log = logging.getLogger(__file__)
 here = os.path.dirname(os.path.abspath(__file__))
 
+# Main view, shows the list of articles
 @view_config(route_name='list', renderer='list.mako')
 def list_view(request):
 	rs = request.db.execute('select articles_to_show from settings')
 	amount_of_articles = rs.fetchone()[0]
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 limit ?', [amount_of_articles])
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 limit ? order by interesting', [amount_of_articles])
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	return {'articles': articles}
 
+# Starts a child process to prevent blocking when refreshing the articles
 @view_config(route_name='refresh')
 def refresh_articles(request):
+	# This process will exit early if a lock file exists in the main project directory. remove the lock file if it's not working
 	subprocess.Popen(['python3', 'scraper.py', '&'])
 
 	return HTTPFound(location=request.route_url('list'))
 
-
+# Show articles that have been read. 
 @view_config(route_name='read', renderer='read.mako')
 def read_articles(request):
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 1 order by interesting desc')
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 1 group by interesting order by inferred_interesting desc ')
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	return {'articles': articles}
 
+# A place to hold settings. Not very well setup, but the best I can do. Can't submit multiple fields at once, for example
 @view_config(route_name='settings', renderer='settings.mako')
 def settings(request):
 	rs = request.db.execute('select * from settings')
@@ -56,6 +61,7 @@ def settings(request):
 	print(settings)
 	return {'settings': settings}
 
+# Used to update the settings
 @view_config(route_name='change_settings')
 def change_settings(request):
 
@@ -88,7 +94,8 @@ def change_settings(request):
 
 	return HTTPFound(location=request.route_url('settings'))
 
-
+# Where new sources are added. Currently sends people back to the list after submitting, 
+# which might be annoying
 @view_config(route_name='new', renderer='new.mako')
 def new_view(request):
 	rs = request.db.execute('select root_url, name, id from sources')
@@ -106,6 +113,7 @@ def new_view(request):
 			request.session.flash('Please enter a url for the news source')
 	return {'sources': sources}
 
+# Interesting and not interesting are used to update the db based on user input
 @view_config(route_name='interesting')
 def interesting(request):
 	article_id = int(request.matchdict['id'])
@@ -124,6 +132,7 @@ def not_interesting(request):
 	request.session.flash("Read the article! Sorry, I'll try to find something more interesting next time.")
 	return HTTPFound(location=request.route_url('list'))
 
+# Allows the user to delete a source, and hides the stories from that source
 @view_config(route_name='delete_source')
 def delete_source(request):
 	source_id = int(request.matchdict['id'])
