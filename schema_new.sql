@@ -3,7 +3,7 @@ create table if not exists articles (
 	url text not null,
 	title text not null,
 	read int default 0,
-	interesting int default 0,
+	interesting int default null,
 	visible int default 1,
 	source_id int not null,
 	added_timestamp text default (datetime('now')),

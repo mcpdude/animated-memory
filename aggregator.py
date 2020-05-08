@@ -33,7 +33,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 def list_view(request):
 	rs = request.db.execute('select articles_to_show from settings')
 	amount_of_articles = rs.fetchone()[0]
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 limit ? order by interesting', [amount_of_articles])
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 order by interesting limit ?', [amount_of_articles])
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	return {'articles': articles}
 
@@ -48,7 +48,7 @@ def refresh_articles(request):
 # Show articles that have been read. 
 @view_config(route_name='read', renderer='read.mako')
 def read_articles(request):
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 1 group by interesting order by inferred_interesting desc ')
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 1 group by interesting order by inferred_interest desc ')
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	return {'articles': articles}
 
@@ -132,6 +132,14 @@ def not_interesting(request):
 	request.session.flash("Read the article! Sorry, I'll try to find something more interesting next time.")
 	return HTTPFound(location=request.route_url('list'))
 
+# initiate a training process
+@view_config(route_name='train')
+def train(request):
+	subprocess.Popen(['python3', 'train.py'])
+
+	return HTTPFound(location=request.route_url('list'))
+
+
 # Allows the user to delete a source, and hides the stories from that source
 @view_config(route_name='delete_source')
 def delete_source(request):
@@ -173,6 +181,7 @@ def main():
 	config.include('pyramid_mako')
 	config.add_route('list', '/')
 	config.add_route('refresh', '/refresh')
+	config.add_route('train', '/train')
 	config.add_route('settings', '/settings')
 	config.add_route('change_settings', '/change_settings')
 	config.add_route('read', '/read')
