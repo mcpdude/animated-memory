@@ -6,12 +6,11 @@ import sqlite3
 print('What do you use to install python3 packages, pip or pip3?')
 command_to_use = input('type pip or pip3 here.')
 
-packages = ['newspaper3k', 'pyramid', 'pyramid.mako']
+packages = ['newspaper3k', 'pyramid', 'pyramid.mako', 'simpletransformers', 'torch', 'torchvision']
 
 for package in packages:
 	
 	subprocess.check_call([command_to_use, 'install', package])
-
 
 try:
 	os.mkdir('article_storage')
