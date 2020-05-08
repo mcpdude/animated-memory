@@ -5,6 +5,9 @@
 <form action="${request.route_url('refresh')}" method="get">
   <input type="submit" name="add" value="Refresh articles" class="button">
 </form>
+<form action="${request.route_url('train')}" method="get">
+  <input type="submit" name="add" value="Train Model" class="button">
+</form>
 
 <ul id="articles">
 % if articles:
@@ -20,9 +23,9 @@
 % else:
   <li>There are no new articles. Maybe add a source?</li>
 % endif
-  <li class="last">
+  <h3 class="last">
     <a href="${request.route_url('new')}">Add/Delete a source</a>
-  </li>
+  </h3>
 
   <h3><a href="${request.route_url('read')}">Want to see the articles you've read before?</a></h3>
   <h3><a href="${request.route_url('settings')}">Settings</a></h3>
