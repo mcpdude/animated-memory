@@ -1,16 +1,22 @@
 # machine learning imports
 from simpletransformers.classification import ClassificationModel
 import torch
+import pandas as pd
 
 # data collection and prep imports
 import sqlite3
 import newspaper
 import requests
+import random
+import shutil
 
 # grab a model, set it up for use for training
 cuda_available = torch.cuda.is_available()
+model_args = {
+	'overwrite_output_dir': True
+}
 model = ClassificationModel(
-    "roberta", "roberta-base", use_cuda=cuda_available
+    "roberta", "roberta-base", use_cuda=cuda_available, args=model_args
 )
 
 # connect to the articles.db to grab any articles that have been rated
@@ -22,22 +28,70 @@ conn.commit()
 # Create a article object for each of the articles to be trained on TODO change this to an iterator later to preserve memory
 urls = [[newspaper.Article(item[0]), item[1]] for item in cursor.fetchall()]
 
-train_data = []
+data = []
 for url in urls:
-	url[0].download
-	url[0].parse
-	html = requests.get(url[0].url).text
-	print(newspaper.fulltext(html))
-	train_data.append([url[0].text, url[1]])
+	req = requests.get(url[0].url)
+	if req.status_code == requests.codes.ok:
+		html = req.text
+		data.append([newspaper.fulltext(html), url[1]])
 
-print(len(train_data))
+random.shuffle(data)
 
-for line in train_data:
-	print(line)
+split = int(len(data) * .8)
 
+eval_data = data[split:]
+train_data = data[:split]
+
+print("train articles: ", len(train_data), " eval articles: ", len(eval_data))
+
+train_df = pd.DataFrame(train_data)
+train_df.columns = ["text", "labels"]
+
+eval_df = pd.DataFrame(eval_data)
+eval_df.columns = ["text", "labels"]
 
 
 print('made it to the training step!')
+model.train_model(train_df)
+
+result, model_outputs, wrong_predictions = model.eval_model(eval_df)
+
+print(result, model_outputs, wrong_predictions)
+
+cursor.execute('select id, url from articles where read = 0')
+conn.commit()
+
+unread_urls = [[newspaper.Article(item[1]), item[0]] for item in cursor.fetchall()]
+
+predictions_to_insert = []
+print(len(unread_urls))
+counter = len(unread_urls)
+for url in unread_urls:
+	counter -=1
+	print(counter, " stories left!")
+	try:
+		req = requests.get(url[0].url, timeout=1)
+	except:
+		continue
+	if req.status_code == requests.codes.ok:
+		html = req.text
+		try:
+			text = newspaper.fulltext(html)
+		except Exception as e:
+			print(e)
+			continue
+
+		predictions, raw_outputs = model.predict([text])
+		print(predictions, type(raw_outputs[0][1]), url[1])
+		prediction = [float(raw_outputs[0][1]), url[1]]
+		print(prediction)	
+		cursor.execute('update articles set inferred_interest = ? where id = ?;', prediction)
+		conn.commit()
+
+	else:
+		print('issue with ', url[0].url)
+
+print('made all the predictions')
 
 
 

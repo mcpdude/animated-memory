@@ -33,7 +33,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 def list_view(request):
 	rs = request.db.execute('select articles_to_show from settings')
 	amount_of_articles = rs.fetchone()[0]
-	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 order by interesting limit ?', [amount_of_articles])
+	rs = request.db.execute('select id, title, url, interesting from articles where read = 0 and visible = 1 order by inferred_interest desc limit ?', [amount_of_articles])
 	articles = [dict(id=row[0], title=row[1], url=row[2], interesting=row[3]) for row in rs.fetchall()]
 	return {'articles': articles}
 
@@ -41,7 +41,7 @@ def list_view(request):
 @view_config(route_name='refresh')
 def refresh_articles(request):
 	# This process will exit early if a lock file exists in the main project directory. remove the lock file if it's not working
-	subprocess.Popen(['python3', 'scraper.py', '&'])
+	subprocess.Popen(['python3', 'scraper.py'])
 
 	return HTTPFound(location=request.route_url('list'))
 
