@@ -1,14 +1,14 @@
-import asyncio
 import sys
 import os
 import newspaper
 import sqlite3
+import requests
 
 from simpletransformers.classification import ClassificationModel
 import torch
 cuda_available = torch.cuda.is_available()
 
-
+# Let's see if there's a model available. If there is, we'll evaluate stories as they come in
 try:
 	model_found = True
 
@@ -24,7 +24,6 @@ except Exception as e:
 
 # Create a db connection
 conn = sqlite3.connect('articles.db')
-
 cursor = conn.cursor()
 
 # create a lock file to indicate that the process has started
@@ -35,6 +34,8 @@ if 'lock' not in os.listdir():
 
 else:
 	print('lockfile present, exiting')
+	if input('CAUTION Remove the lockfile? CAUTION \n Y/n \n') == 'Y':
+		os.remove('lock')
 	sys.exit()
 
 
@@ -49,30 +50,50 @@ conn.commit()
 
 rows = []
 
-for source in sources:
-	print(source[1])
-	# Grab articles, with a short timeout
-	articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=False)
-	# articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=True)
+if model_found:
+	for source in sources:
+		# Grab articles, with a short timeout
+		# articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=False)
+		articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=True)
 
-	for article in articles.articles:
-		# print(article.url)
-	# Filter out feeds from major sites
-		if str(article.url).endswith('feed') or str(article.url).endswith('feeds'):
-			continue
+		for article in articles.articles:
+			# Filter out feeds from major sites
+			if str(article.url).endswith('feed') or str(article.url).endswith('feeds'):
+				continue
 
-		# insert articles in the temp table
-		elif article.url not in current_articles and article.title is not None and article.title.strip() is not "":
-			rows.append([article.url, article.title, source[2]])
+			# insert articles in the temp table
+			elif article.url not in current_articles and article.title is not None and article.title.strip() is not "":
+				try:
+					req = requests.get(article.url)
+					html = req.text
+					predictions, raw_outputs = model.predict([newspaper.fulltext(html)])
+					inferred_interest = float(raw_outputs[0][1])
+					row = [article.url, article.title, source[2], inferred_interest]
+					cursor.execute('insert into articles(url, title, source_id, inferred_interest) values (?,?,?,?)', row)
+					conn.commit()
+				except Exception as e:
+					print(e)
+					print('Issue with ', article.url)
 
-# then, insert articles from the temp table to the actual table
+else:
+	for source in sources:
+		print(source[1])
+		# Grab articles, with a short timeout
+		# articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=False)
+		articles = newspaper.build(source[0], fetch_images=0, request_timeout=1, memoize_articles=True)
 
-for article in rows:
-	cursor.execute('insert into articles(url, title, source_id) values (?,?,?)', article)
-	conn.commit()
-# drop the temp table
+		for article in articles.articles:
+			# print(article.url)
+		# Filter out feeds from major sites
+			if str(article.url).endswith('feed') or str(article.url).endswith('feeds'):
+				continue
 
-conn.commit()
+			# insert articles in the temp table
+			elif article.url not in current_articles and article.title is not None and article.title.strip() is not "":
+				row = [article.url, article.title, source[2]]
+				cursor.execute('insert into articles(url, title, source_id) values (?,?,?)', row)
+				conn.commit()
+		
 
 # delete the lock file
 os.remove('lock')
