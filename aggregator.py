@@ -5,6 +5,7 @@ import newspaper
 import sys
 import tempfile
 import subprocess
+import webbrowser
 
 
 from pyramid.config import Configurator
@@ -41,6 +42,13 @@ def list_view(request):
 @view_config(route_name='refresh')
 def refresh_articles(request):
 	# This process will exit early if a lock file exists in the main project directory. remove the lock file if it's not working
+	if 'lock' not in os.listdir():
+		with open('lock', 'w') as file:
+			print('lock created!') 
+
+	else:
+		request.session.flash('lockfile present, exiting')
+
 	subprocess.Popen(['python3', 'scraper.py'])
 
 	return HTTPFound(location=request.route_url('list'))
@@ -135,6 +143,13 @@ def not_interesting(request):
 # initiate a training process
 @view_config(route_name='train')
 def train(request):
+	if 'lock' not in os.listdir():
+		with open('lock', 'w') as file:
+			print('lock created!') 
+
+	else:
+		request.session.flash('lockfile present, exiting')
+
 	subprocess.Popen(['python3', 'train.py'])
 
 	return HTTPFound(location=request.route_url('list'))
@@ -196,9 +211,13 @@ def main():
 
 	app = config.make_wsgi_app()
 	server = make_server('0.0.0.0', 8080, app)
+	webbrowser.open('localhost:8080')
+
 	server.serve_forever()
+
 
 if __name__ == '__main__':
 	main()
+
 
 
