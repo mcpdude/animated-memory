@@ -91,6 +91,10 @@ for url in unread_urls:
 	else:
 		print('issue with ', url[0].url)
 
+# delete the lock file
+os.remove('lock')
+print('lock removed')
+
 print('made all the predictions')
 
 

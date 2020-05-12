@@ -4,6 +4,7 @@ import newspaper
 import sqlite3
 import requests
 
+# Imports necessary for training
 from simpletransformers.classification import ClassificationModel
 import torch
 cuda_available = torch.cuda.is_available()
@@ -26,17 +27,6 @@ except Exception as e:
 conn = sqlite3.connect('articles.db')
 cursor = conn.cursor()
 
-# create a lock file to indicate that the process has started
-# print(os.listdir())
-if 'lock' not in os.listdir():
-	with open('lock', 'w') as file:
-		print('lock created!') 
-
-else:
-	print('lockfile present, exiting')
-	if input('CAUTION Remove the lockfile? CAUTION \n Y/n \n') == 'Y':
-		os.remove('lock')
-	sys.exit()
 
 
 # iterate through the sources and grab new articles
