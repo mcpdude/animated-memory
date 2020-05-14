@@ -1,51 +1,59 @@
-import subprocess
+#!/usr/bin/env python3
+
+import setuptools
 import sys
 import os
 import sqlite3
 
-print('What do you use to install python3 packages, pip or pip3?')
-command_to_use = input('type pip or pip3 here.')
+with open("README.md", "r") as fh:
 
-packages = ['newspaper3k', 'pyramid', 'pyramid.mako', 'simpletransformers', 'torch', 'torchvision']
+    long_description = fh.read()
 
-for package in packages:
-	
-	subprocess.check_call([command_to_use, 'install', package])
+setuptools.setup(
 
-try:
-	os.mkdir('article_storage')
+     name='animated-memory',  
 
-except:
-	print('article_storage directory already exists')
+     version='0.2.3',
 
-here = os.path.dirname(os.path.abspath(__file__))
-settings = {}
-settings['db'] = os.path.join(here, 'articles.db')
+     scripts=['animated-memory'] ,
 
-wipe = input('Do you want to wipe your setup? Y/n \n')
+     author="Brian Posey",
 
-if wipe == 'Y':
-	try:
-		os.remove('articles.db')
-	except:
-		print('articles.db does not exist')
-	with open(os.path.join(here, 'schema_new.sql')) as f:
-		statement = f.read()
-		
-		db = sqlite3.connect(settings['db'])
-		db.executescript(statement)
-		db.commit()
-		db.close()
+     author_email="thebrianposey@gmail.com",
 
-elif wipe == 'n':
-	with open(os.path.join(here, 'schema.sql')) as f:
-		statement = f.read()
-		
-		db = sqlite3.connect(settings['db'])
-		db.executescript(statement)
-		db.commit()
-		db.close()
+     description="A news aggregator with local training",
 
-else:
-	print("Sorry, didn't understand that. Make sure to use Y or n.")
+     long_description=long_description,
 
+   long_description_content_type="text/markdown",
+
+     url="https://github.com/mcpdude/animated-memory",
+
+     packages=setuptools.find_packages(),
+
+     install_requires=[
+          'pyramid',
+          'pyramid_mako',
+          'transformers',
+          'pandas',
+          'simpletransformers',
+          'torch',
+          'torchvision'
+      ],
+
+     classifiers=[
+
+         "Programming Language :: Python :: 3",
+
+         "License :: OSI Approved :: MIT License",
+
+         "Operating System :: OS Independent",
+
+     ],
+
+     data_files=[('templates', ['templates/list.mako', 'templates/layout.mako', 'templates/new.mako', 'templates/read.mako', 'templates/settings.mako']),
+     			('scripts', ['scraper.py', 'train.py']),
+     			('static', ['static/style.css']),
+     			('sql', ['schema.sql'])]
+
+ )

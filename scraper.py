@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import sys
 import os
 import newspaper
@@ -8,6 +11,13 @@ import requests
 from simpletransformers.classification import ClassificationModel
 import torch
 cuda_available = torch.cuda.is_available()
+
+print('oh duh')
+
+# get the location of articles.db
+
+db = sys.argv[1]
+print(db)
 
 # Let's see if there's a model available. If there is, we'll evaluate stories as they come in
 try:
@@ -24,7 +34,7 @@ except Exception as e:
 
 
 # Create a db connection
-conn = sqlite3.connect('articles.db')
+conn = sqlite3.connect(db)
 cursor = conn.cursor()
 
 
