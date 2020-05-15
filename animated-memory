@@ -116,6 +116,16 @@ def change_settings(request):
 
 		request.db.execute('update settings set name = ?', [value])
 
+	elif request.GET.get('field') == "Remove Lock File":
+		if os.path.exists('lock'):
+			os.remove('lock')
+			request.session.flash("Lock file removed")
+		
+		else:
+			request.session.flash("No lock file to remove in this directory")
+
+		return HTTPFound(location=request.route_url('settings'))
+
 	request.db.commit()
 	request.session.flash("Settings updated!")
 

@@ -14,3 +14,8 @@
 	<input type="text" name="articles_to_show" placeholder="Articles to Show">
 	<input type="submit" name="field" value="Articles to Show" class="button">
 </form>
+
+<form action="${request.route_url('change_settings')}" method="get">
+	Removing lock file should only be done if you've checked the console.
+	<input type="submit" name="field" value="Remove Lock File" class="button">
+</form>
