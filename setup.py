@@ -13,7 +13,7 @@ setuptools.setup(
 
      name='animated-memory',  
 
-     version='0.2.3',
+     version='0.2.4',
 
      scripts=['animated-memory'] ,
 
@@ -37,7 +37,7 @@ setuptools.setup(
           'transformers',
           'pandas',
           'simpletransformers',
-          'torch',
+          'torch>=1.4',
           'torchvision'
       ],
 
